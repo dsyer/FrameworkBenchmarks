@@ -69,3 +69,8 @@ benchmark.cfg
 
 # python
 .venv/
+
+# terraform
+terraform.*
+.terraform.*
+.terraform/

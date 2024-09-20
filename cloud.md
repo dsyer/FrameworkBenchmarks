@@ -49,6 +49,12 @@ worker_ip = "34.105.144.151"
 worker_name = "worker-4d675238400dcf52"
 ```
 
+Run the postinstall script to update the IP addresses on the remotes:
+
+```
+$ for f in server database worker; do ./scripts/postinstall.sh `terraform output $f'_ip' | sed -e 's/"//g'`; done
+```
+
 You can verify with `gcloud` that the instance is running, and then SSH in:
 
 ```

@@ -15,8 +15,9 @@ with (import <nixpkgs> { }); {
           jq
           stow
           yq
-		  jdk
-		  oha
+          oha
+          zip
+          unzip
         ];
       };
     };
