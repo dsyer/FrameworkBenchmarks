@@ -16,6 +16,7 @@ with (import <nixpkgs> { }); {
           stow
           yq
           oha
+		  wrk
           zip
           unzip
         ];

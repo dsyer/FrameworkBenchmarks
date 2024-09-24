@@ -14,7 +14,7 @@ ssh-keygen -f ~/.ssh/known_hosts -R $remote
 while ! ssh -o StrictHostKeyChecking=no -i ~/.ssh/google_compute_engine $remote mkdir -m 700 -p .ssh
 do
     echo "Waiting for ssh..."
-    ((c++)) && ((c==10)) && break
+    ((c++)) && ((c==100)) && break
     sleep 1
 done
 ssh -o StrictHostKeyChecking=no -i ~/.ssh/google_compute_engine $remote test -e ~/.ssh/id_rsa || scp -i ~/.ssh/google_compute_engine -o StrictHostKeyChecking=no ~/.ssh/id_rsa ~/.ssh/id_rsa.pub $remote:~/.ssh

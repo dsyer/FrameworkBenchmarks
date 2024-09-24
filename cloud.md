@@ -67,6 +67,47 @@ $ ssh -i ~/.ssh/google_compute_engine $(terraform output server_ip | sed -e 's/"
 dsyer@test:~$
 ```
 
+## Manual Set Up
+
+To be automated...
+
+### Server
+
+```
+$ cd FrameworkBenchmarks/frameworks/Java/spring
+$ curl -s "https://get.sdkman.io" | bash
+$ . ~/.sdkman/bin/sdkman-init.sh
+$ sdk install java 23-tem
+$ ./mvnw package
+$ java -XX:+DisableExplicitGC -XX:+UseStringDeduplication -jar target/hello-spring-1.0-SNAPSHOT.jar
+```
+
+### Database
+
+You need to (at a minimum) build the Postgres container and run it. If there is an SSD and you want to use
+that you need to format it and mount it too.
+
+```
+$ ssh -i ~/.ssh/google_compute_engine $(terraform output database_ip | sed -e 's/"//g')
+$ lsblk
+NAME    MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+nvme1n1 259:0    0  375G  0 disk
+$ sudo mkfs.ext4 -F /dev/nvme1n1
+$ sudo mkdir /ssd
+$ sudo mount /dev/nvme1n1 /ssd
+$ cd FrameworkBenchmarks
+$ ./tfb --mode verify --test spring
+$ docker run -p 5432:5432 -v /ssd:/ssd techempower/postgres
+```
+
+### Worker
+
+Nothing special to set up here.
+
+```
+$ for c in 16 32 64 128 256 512; do wrk -d 15s -c $c --timeout 8 -t $(($c>90?90:$c)) -H "Connection: keep-alive" http://tfb-server:8080/fortunes | grep Requests; done
+```
+
 ## Tear Down
 
 Unfortunately you can't use Terraform to [stop an instance](https://github.com/terraform-providers/terraform-provider-aws/issues/22) so you have to go to `gcloud` to do that:

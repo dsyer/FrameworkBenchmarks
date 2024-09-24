@@ -16,8 +16,8 @@ resource "random_id" "instance_id" {
 
 resource "google_compute_instance" "worker" {
   name         = "worker-${random_id.instance_id.hex}"
-  machine_type = "c3-standard-8"
-  zone         = "europe-west2-c"
+  machine_type = "c3d-standard-90"
+  zone         = "europe-west1-d"
 
   boot_disk {
     initialize_params {
@@ -41,16 +41,16 @@ resource "google_compute_instance" "worker" {
 
 resource "google_compute_instance" "database" {
   name         = "database-${random_id.instance_id.hex}"
-  machine_type = "c3-standard-8"
-  zone         = "europe-west2-c"
+  machine_type = "c3d-standard-90-lssd"
+  zone         = "europe-west1-c"
 
   boot_disk {
     initialize_params {
       image = "ubuntu-os-cloud/ubuntu-2204-lts"
       size = 100
     }
-  }
-
+  }	
+  
   network_interface {
     network = "default"
 
@@ -67,8 +67,8 @@ resource "google_compute_instance" "database" {
 resource "google_compute_instance" "server" {
   depends_on = [google_compute_instance.database]
   name         = "server-${random_id.instance_id.hex}"
-  machine_type = "c3-standard-8"
-  zone         = "europe-west2-c"
+  machine_type = "c3d-standard-90"
+  zone         = "europe-west1-c"
 
   boot_disk {
     initialize_params {
