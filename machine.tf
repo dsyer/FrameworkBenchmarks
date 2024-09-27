@@ -16,7 +16,7 @@ resource "random_id" "instance_id" {
 
 resource "google_compute_instance" "worker" {
   name         = "worker-${random_id.instance_id.hex}"
-  machine_type = "c3d-standard-90"
+  machine_type = "c3d-standard-60"
   zone         = "europe-west1-d"
 
   boot_disk {
@@ -41,7 +41,7 @@ resource "google_compute_instance" "worker" {
 
 resource "google_compute_instance" "database" {
   name         = "database-${random_id.instance_id.hex}"
-  machine_type = "c3d-standard-90-lssd"
+  machine_type = "c3d-standard-60-lssd"
   zone         = "europe-west1-c"
 
   boot_disk {
@@ -67,7 +67,7 @@ resource "google_compute_instance" "database" {
 resource "google_compute_instance" "server" {
   depends_on = [google_compute_instance.database]
   name         = "server-${random_id.instance_id.hex}"
-  machine_type = "c3d-standard-90"
+  machine_type = "c3d-standard-60"
   zone         = "europe-west1-c"
 
   boot_disk {
