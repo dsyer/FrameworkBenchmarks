@@ -8,7 +8,7 @@ You need to:
 - authenticate with `gcloud` (`gcloud auth application-default login`) and set up a project if you don't have one
 - create an SSH identity file (RSA private key) `~/.ssh/google_compute_engine` if you don't have one
 
-## Create a VM and Log in
+## Create the VMs and Log in
 
 Create local environment (if you don't have `terraform` already):
 
@@ -37,6 +37,7 @@ Create a VM and log in (you will need to replace the GCP project ID):
 
 ```
 $ terraform apply -auto-approve
+...
 Apply complete! Resources: 0 added, 0 changed, 0 destroyed.
 
 Outputs:
@@ -49,7 +50,7 @@ worker_ip = "34.105.144.151"
 worker_name = "worker-4d675238400dcf52"
 ```
 
-Run the postinstall script to update the IP addresses on the remotes:
+Run the postinstall script to update the IP addresses on the remotes and run some host-specific automations:
 
 ```
 $ for f in server database worker; do ./scripts/postinstall.sh `terraform output $f'_ip' | sed -e 's/"//g'`; done
@@ -67,42 +68,79 @@ $ ssh -i ~/.ssh/google_compute_engine $(terraform output server_ip | sed -e 's/"
 dsyer@test:~$
 ```
 
-## Manual Set Up
+## Running Benchmarks
 
-To be automated...
+Most of the set up is done automatically.
 
 ### Server
 
+Postinstall scripts set up the shell and install Java. You can launch the server on the command line. This one for the vanilla Spring server:
+
 ```
-$ cd FrameworkBenchmarks/frameworks/Java/spring
-$ curl -s "https://get.sdkman.io" | bash
-$ . ~/.sdkman/bin/sdkman-init.sh
-$ sdk install java 23-tem
+$ cd ~/FrameworkBenchmarks/frameworks/Java/spring
 $ ./mvnw package
 $ java -XX:+DisableExplicitGC -XX:+UseStringDeduplication -jar target/hello-spring-1.0-SNAPSHOT.jar
 ```
 
+or you can open a remote session in VSCode and debug it.
+
+For the webflux sample:
+
+```
+$ cd ~/FrameworkBenchmarks/frameworks/Java/spring-webflux
+$ ./mvnw package
+$ java -XX:+DisableExplicitGC -XX:+UseStringDeduplication -Dio.netty.leakDetection.level=disabled -Dreactor.netty.http.server.lastFlushWhenNoRead=true -jar target/spring-webflux-benchmark.jar  --spring.profiles.active=r2dbc
+```
+
+To collect profiling data (while the server is under load) with `async-profiler`:
+
+```
+$ ~/profiler/bin/asprof -d 20 -f test.html hello-spring-1.0-SNAPSHOT.jar
+```
+
+It will fail the first time and tell you to set 2 flags in the kernel to allow profiling of userspace processes:
+
+```
+$ sudo sysctl kernel.perf_event_paranoid=1
+$ sudo sysctl kernel.kptr_restrict=0
+```
+
+With JFR (Java <=21 only), first find the PID:
+
+```
+$ jps
+71233 hello-spring-1.0-SNAPSHOT.jar
+```
+
+then put the server under load and start and stop the profiler (with a pause in between):
+
+```
+$ jcmd 71233 JFR.start exceptions=all
+...
+$ jcmd 71233 JFR.dump filename=recording.jfr
+```
+
 ### Database
 
-You need to (at a minimum) build the Postgres container and run it. If there is an SSD and you want to use
-that you need to format it and mount it too.
+The postinstall scripts build the Postgres container and run it. If there is an SSD then it is formatted and mounted too. Check everything is set up by looking for the database running in docker:
 
 ```
 $ ssh -i ~/.ssh/google_compute_engine $(terraform output database_ip | sed -e 's/"//g')
-$ lsblk
-NAME    MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
-nvme1n1 259:0    0  375G  0 disk
-$ sudo mkfs.ext4 -F /dev/nvme1n1
-$ sudo mkdir /ssd
-$ sudo mount /dev/nvme1n1 /ssd
-$ cd FrameworkBenchmarks
-$ ./tfb --mode verify --test spring
-$ docker run -p 5432:5432 -v /ssd:/ssd techempower/postgres
+$ docker ps
+CONTAINER ID   IMAGE                  COMMAND                  CREATED          STATUS        ...
+a583643693c9   techempower/postgres   "docker-entrypoint.s…"   22 seconds ago   Up 21 seconds ...
 ```
 
 ### Worker
 
-Nothing special to set up here.
+Nothing special to set up here. Check the server is running:
+
+```
+$ ssh -i ~/.ssh/google_compute_engine $(terraform output worker_ip | sed -e 's/"//g')
+$ curl tfb-server:8080/db
+```
+
+To collect some benchmark data:
 
 ```
 $ for c in 16 32 64 128 256 512; do wrk -d 15s -c $c --timeout 8 -t $(($c>90?90:$c)) -H "Connection: keep-alive" http://tfb-server:8080/fortunes | grep Requests; done

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if ! which docker 2> /dev/null; then
+if ! which docker 2>&1 > /dev/null; then
     sudo apt-get update
     sudo apt-get install -yq docker.io
     sudo usermod -aG docker $USER
@@ -11,7 +11,7 @@ if ! [ -e ~/.config/nixpkgs/config.nix ]; then
     ln -s ~/FrameworkBenchmarks/.config/nixpkgs/config.nix ~/.config/nixpkgs
 fi
 
-if ! which nix-env 2> /dev/null; then
+if ! which nix-env 2>&1 > /dev/null; then
   # Install nix
   curl -L https://nixos.org/nix/install | bash
   # Initialize env vars

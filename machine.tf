@@ -10,13 +10,19 @@ provider "google" {
   project      = var.project
 }
 
+variable "cpus" {
+  description  = "Number of CPUs per VM. Valid values: 8, 16, 30, 60, 90"
+  type         = number
+  default      = 8
+}
+
 resource "random_id" "instance_id" {
   byte_length = 8
 }
 
 resource "google_compute_instance" "worker" {
   name         = "worker-${random_id.instance_id.hex}"
-  machine_type = "c3d-standard-60"
+  machine_type = "c3d-standard-${var.cpus}"
   zone         = "europe-west1-d"
 
   boot_disk {
@@ -41,7 +47,7 @@ resource "google_compute_instance" "worker" {
 
 resource "google_compute_instance" "database" {
   name         = "database-${random_id.instance_id.hex}"
-  machine_type = "c3d-standard-60-lssd"
+  machine_type = "c3d-standard-${var.cpus}-lssd"
   zone         = "europe-west1-c"
 
   boot_disk {
@@ -67,7 +73,7 @@ resource "google_compute_instance" "database" {
 resource "google_compute_instance" "server" {
   depends_on = [google_compute_instance.database]
   name         = "server-${random_id.instance_id.hex}"
-  machine_type = "c3d-standard-60"
+  machine_type = "c3d-standard-${var.cpus}"
   zone         = "europe-west1-c"
 
   boot_disk {
