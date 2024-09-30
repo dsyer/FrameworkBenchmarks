@@ -143,7 +143,7 @@ $ curl tfb-server:8080/db
 To collect some benchmark data:
 
 ```
-$ for c in 16 32 64 128 256 512; do wrk -d 15s -c $c --timeout 8 -t $(($c>90?90:$c)) -H "Connection: keep-alive" http://tfb-server:8080/fortunes | grep Requests; done
+$ for c in 16 32 64 128 256 512; do wrk -d 15s -c $c --timeout 8 -t $(($c>$(nproc)?$(nproc):$c)) -H "Connection: keep-alive" http://tfb-server:8080/fortunes | grep Requests; done
 ```
 
 ## Tear Down

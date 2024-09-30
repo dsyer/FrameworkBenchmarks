@@ -13,7 +13,7 @@ provider "google" {
 variable "cpus" {
   description  = "Number of CPUs per VM. Valid values: 8, 16, 30, 60, 90"
   type         = number
-  default      = 8
+  default      = 60
 }
 
 resource "random_id" "instance_id" {
@@ -24,6 +24,7 @@ resource "google_compute_instance" "worker" {
   name         = "worker-${random_id.instance_id.hex}"
   machine_type = "c3d-standard-${var.cpus}"
   zone         = "europe-west1-d"
+  allow_stopping_for_update = true
 
   boot_disk {
     initialize_params {
@@ -49,6 +50,7 @@ resource "google_compute_instance" "database" {
   name         = "database-${random_id.instance_id.hex}"
   machine_type = "c3d-standard-${var.cpus}-lssd"
   zone         = "europe-west1-c"
+  allow_stopping_for_update = true
 
   boot_disk {
     initialize_params {
@@ -75,6 +77,7 @@ resource "google_compute_instance" "server" {
   name         = "server-${random_id.instance_id.hex}"
   machine_type = "c3d-standard-${var.cpus}"
   zone         = "europe-west1-c"
+  allow_stopping_for_update = true
 
   boot_disk {
     initialize_params {

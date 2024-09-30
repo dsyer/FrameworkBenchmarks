@@ -1,5 +1,7 @@
 #!/bin/bash
 
+if [ -e ~/.nix-profile/etc/profile.d/nix.sh ]; then . ~/.nix-profile/etc/profile.d/nix.sh; fi
+
 if ! [ -d ~/.sdkman ]; then
   curl -s "https://get.sdkman.io" | bash
   . ~/.sdkman/bin/sdkman-init.sh
