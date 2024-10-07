@@ -53,7 +53,7 @@ worker_name = "worker-4d675238400dcf52"
 Run the postinstall script to update the IP addresses on the remotes and run some host-specific automations:
 
 ```
-$ for f in server database worker; do ./scripts/postinstall.sh `terraform output $f'_ip' | sed -e 's/"//g'`; done
+$ ./scripts/postinstall.sh
 ```
 
 You can verify with `gcloud` that the instance is running, and then SSH in:
@@ -138,6 +138,7 @@ Nothing special to set up here. Check the server is running:
 ```
 $ ssh -i ~/.ssh/google_compute_engine $(terraform output worker_ip | sed -e 's/"//g')
 $ curl tfb-server:8080/db
+{"id":1958,"randomnumber":9027}
 ```
 
 To collect some benchmark data:

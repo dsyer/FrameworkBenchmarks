@@ -13,7 +13,22 @@ provider "google" {
 variable "cpus" {
   description  = "Number of CPUs per VM. Valid values: 8, 16, 30, 60, 90"
   type         = number
-  default      = 60
+  default      = 8
+}
+
+variable "machine_type" {
+  description  = "GCP machine type code, e.g. c3-standard, c3d-standard, n2-standard. Out of those only c3d has the SSD option (per the database_ssd flag)."
+  default      = "c3d-standard"
+}
+
+variable "database_ssd" {
+  description  = "Does the database server have an ephemeral SSD? If 'true' then the machine type must support it."
+  type = bool
+  default = true
+}
+
+locals {
+  database_type = var.database_ssd ? "${var.machine_type}-${var.cpus}-lssd" : "${var.machine_type}-${var.cpus}"
 }
 
 resource "random_id" "instance_id" {
@@ -22,7 +37,7 @@ resource "random_id" "instance_id" {
 
 resource "google_compute_instance" "worker" {
   name         = "worker-${random_id.instance_id.hex}"
-  machine_type = "c3d-standard-${var.cpus}"
+  machine_type = "${var.machine_type}-${var.cpus}"
   zone         = "europe-west1-d"
   allow_stopping_for_update = true
 
@@ -48,7 +63,7 @@ resource "google_compute_instance" "worker" {
 
 resource "google_compute_instance" "database" {
   name         = "database-${random_id.instance_id.hex}"
-  machine_type = "c3d-standard-${var.cpus}-lssd"
+  machine_type = "${local.database_type}"
   zone         = "europe-west1-c"
   allow_stopping_for_update = true
 
@@ -75,7 +90,7 @@ resource "google_compute_instance" "database" {
 resource "google_compute_instance" "server" {
   depends_on = [google_compute_instance.database]
   name         = "server-${random_id.instance_id.hex}"
-  machine_type = "c3d-standard-${var.cpus}"
+  machine_type = "${var.machine_type}-${var.cpus}"
   zone         = "europe-west1-c"
   allow_stopping_for_update = true
 

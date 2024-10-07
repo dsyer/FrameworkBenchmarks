@@ -11,5 +11,5 @@ if lsblk | grep -q nvme1n1; then
 fi
 
 cd `dirname $0`/..
-./tfb --mode verify --test spring
+docker build -t techempower/postgres -f toolset/databases/postgres/postgres.dockerfile toolset/databases/postgres/
 docker run -d -p 5432:5432 $ssd techempower/postgres

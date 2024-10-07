@@ -19,6 +19,7 @@ with (import <nixpkgs> { }); {
 		  wrk
           zip
           unzip
+		  unixtools.netstat
         ];
       };
     };
