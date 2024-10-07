@@ -46,10 +46,14 @@ public class R2dbcDbRepository implements DbRepository {
 
     @Override
     public Mono<World> findAndUpdateWorld(int id, int randomNumber) {
-        return getWorld(id).flatMap(world -> {
-            world.randomnumber = randomNumber;
-            return updateWorld(world);
-        });
+        return databaseClient.sql("SELECT id, randomnumber FROM world WHERE id = $1")
+                .bind("$1", id)
+                .map((row, rowMetadata) -> new World(row.get("id", Integer.class),
+                        row.get("randomnumber", Integer.class)))
+                .first().flatMap(world -> {
+                    world.randomnumber = randomNumber;
+                    return updateWorld(world);
+                });
     }
 
     @Override
