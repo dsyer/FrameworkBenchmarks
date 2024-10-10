@@ -3,9 +3,6 @@ server:
   servlet:
     encoding:
       force: true
-  tomcat:
-    threads:
-    max: 512
 
 ---
 spring:
